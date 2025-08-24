@@ -1,25 +1,35 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System;
+using System.Collections.Generic;
+using System.IO;
+
 namespace To_Do_List;
+public class CsvEntry
+{
+    public int EntryNr { get; set; }
+    public string Entry { get; set; }
+}
+
 class Program
 {
-    static void Main(string[] args)
+    static void Main()
     {
-        Console.WriteLine("To-Do-List Command Line Tool");
+        
 
         // appData Folder; if not existing - create.
         string appDataPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "cs_ToDoList"
         );
+        string csvFilePath = Path.Combine(appDataPath, "data.csv");
         if (!Directory.Exists(appDataPath))
         {
             Directory.CreateDirectory(appDataPath);
         }
         // End appData Folder;
-        
+
         // csv File; if not existing - create.
-        string csvFilePath = Path.Combine(appDataPath, "data.csv");
+        List<CsvEntry> entries = new List<CsvEntry>();
 
         if (!File.Exists(csvFilePath))
         {
@@ -31,12 +41,34 @@ class Program
         }
         else
         {
-            Console.WriteLine("CSV-Datei already exists: " + csvFilePath);
+            //Console.WriteLine("CSV-Datei already exists: " + csvFilePath);
+            string[] lines = File.ReadAllLines(csvFilePath);
+            for (int i = 1; i < lines.Length; i++)
+            {
+                string[] parts = lines[i].Split(";");
+                if (parts.Length == 2)
+                {
+                    entries.Add(new CsvEntry
+                    {
+                        EntryNr = int.Parse(parts[0]),
+                        Entry = parts[1]
+                    });
+                }
+            }
         }
         // End csv File;
+        // Output of all todos
 
-        //-> Read 2 array
+        Console.WriteLine("To-Do-List Command Line Tool");
+        Console.WriteLine("Current To-Do's: ");
 
+        while (true)
+        {
+
+        foreach (var e in entries)
+        {
+            Console.WriteLine($"{e.EntryNr}: {e.Entry}");
+        }
 
         Console.WriteLine("Operations: (a)dd, (d)elete, (q)uit");
         string inputOp = Console.ReadLine();
@@ -48,13 +80,23 @@ class Program
             {
             case 'q':
                 Console.WriteLine("exit App");
-                break;
+                return;
             case 'a':
                 Console.WriteLine("Add a new To-Do: ");
-                int entryNr = 0; //from array -> needs to ++ 
-                string entry = Console.ReadLine();
+                string newEntry = Console.ReadLine();
                 //-> entryNr + entry to array. Write it to file after
-                Console.WriteLine(entryNr + ";" + entry);
+                int entryNr = entries.Count + 1;
+
+                var newCsvEntry = new CsvEntry
+                {
+                    EntryNr = entryNr,
+                    Entry = newEntry
+                };
+                entries.Add(newCsvEntry);
+
+                File.AppendAllText(csvFilePath, $"{entryNr};{newEntry}{Environment.NewLine}");
+
+                Console.WriteLine(entryNr + ";" + newEntry);
                 break;
             case 'd':
                 Console.WriteLine("Delete To-Do: ");
@@ -62,7 +104,8 @@ class Program
             default:
                 Console.WriteLine("exit");
                 break;
-            }      
+            }
+        }
     }
 }
 
